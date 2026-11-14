@@ -14,7 +14,10 @@ struct PersistenceChecks {
         try verifyReopenAndRename(at: url, id: songID)
         try verifyRenameAndDelete(at: url, id: songID)
         try verifyDeletionPersisted(at: url)
-        print("PASS: create, disk reopen, title trimming, rename, rollback, normalized MIDI notes, positions, cascade deletion, unrelated data preservation.")
+        let editingSongID = try createChordSequence(at: url)
+        try verifyChordEditingAndDeletion(at: url, id: editingSongID)
+        try verifyEditedSequenceReopened(at: url, id: editingSongID)
+        print("PASS: create, disk reopen, title trimming, rename, rollback, normalized MIDI notes, positions, cascade deletion, unrelated data preservation, draft cancellation, empty selection rejection, chord create/edit/delete, labels, append positions, cross-song isolation.")
     }
 
     @MainActor
@@ -84,4 +87,78 @@ struct PersistenceChecks {
         precondition(songs.count == 1 && songs[0].title == "Unrelated Song")
         precondition(tryCountChords(container.mainContext) == 0)
     }
+
+    @MainActor
+    static func createChordSequence(at url: URL) throws -> UUID {
+        let container = try NotebookStore.makeContainer(at: url)
+        let context = container.mainContext
+        let song = Song(title: "Chord Editing")
+        context.insert(song)
+        try context.save()
+        try song.saveChord(ChordDraft(label: "  Opening  ", notes: [41, 48, 52]), editing: nil, in: context)
+        try song.saveChord(ChordDraft(notes: [43, 50, 53]), editing: nil, in: context)
+        precondition(song.orderedChords.map(\.position) == [0, 1])
+        let first = song.orderedChords[0]
+        precondition(first.label == "Opening" && first.notes == [41, 48, 52])
+        precondition(song.orderedChords[1].label == nil)
+        let firstID = first.id
+        let firstPosition = first.position
+
+        var canceledDraft = ChordDraft(chord: first)
+        canceledDraft.notes.remove(41)
+        canceledDraft.notes.insert(59)
+        canceledDraft.label = "Unsaved"
+        precondition(first.label == "Opening" && first.notes == [41, 48, 52])
+        precondition(!context.hasChanges)
+
+        do {
+            try song.saveChord(ChordDraft(notes: [0, 60, 99]), editing: first, in: context)
+            preconditionFailure("Empty selections must be rejected")
+        } catch Song.ChordEditingError.emptySelection { }
+        precondition(song.chords.count == 2 && first.notes == [41, 48, 52])
+        let edit = ChordDraft(label: "   ", notes: [42, 49, 59])
+        try song.saveChord(edit, editing: first, in: context)
+        precondition(first.id == firstID && first.position == firstPosition)
+        precondition(first.label == nil && first.notes == [42, 49, 59])
+        return song.id
+    }
+
+    @MainActor
+    static func verifyChordEditingAndDeletion(at url: URL, id: UUID) throws {
+        let container = try NotebookStore.makeContainer(at: url)
+        let context = container.mainContext
+        let songs = try context.fetch(FetchDescriptor<Song>())
+        let song = songs.first { $0.id == id }!
+        let unrelated = songs.first { $0.id != id }!
+        precondition(song.orderedChords.map(\.notes) == [[42, 49, 59], [43, 50, 53]])
+        precondition(song.orderedChords[0].label == nil)
+        try unrelated.saveChord(ChordDraft(label: "Keep", notes: [47, 55]), editing: nil, in: context)
+        let unrelatedChord = unrelated.orderedChords[0]
+        do {
+            try song.saveChord(ChordDraft(notes: [41]), editing: unrelatedChord, in: context)
+            preconditionFailure("Must not edit another song's chord")
+        } catch Song.ChordEditingError.wrongSong { }
+        do {
+            try song.deleteChord(unrelatedChord, in: context)
+            preconditionFailure("Must not delete another song's chord")
+        } catch Song.ChordEditingError.wrongSong { }
+        try song.deleteChord(song.orderedChords[0], in: context)
+        precondition(song.orderedChords.map(\.notes) == [[43, 50, 53]])
+        try song.saveChord(ChordDraft(label: "Ending", notes: [45, 52, 59]), editing: nil, in: context)
+        precondition(song.orderedChords.map(\.position) == [1, 2])
+        precondition(unrelatedChord.notes == [47, 55] && unrelatedChord.label == "Keep")
+    }
+
+    @MainActor
+    static func verifyEditedSequenceReopened(at url: URL, id: UUID) throws {
+        let container = try NotebookStore.makeContainer(at: url)
+        let songs = try container.mainContext.fetch(FetchDescriptor<Song>())
+        let song = songs.first { $0.id == id }!
+        precondition(song.orderedChords.map(\.notes) == [[43, 50, 53], [45, 52, 59]])
+        precondition(song.orderedChords.map(\.position) == [1, 2])
+        precondition(song.orderedChords[1].label == "Ending")
+        let unrelated = songs.first { $0.id != id }!
+        precondition(unrelated.chords.count == 1 && unrelated.chords[0].label == "Keep")
+    }
+
 }
