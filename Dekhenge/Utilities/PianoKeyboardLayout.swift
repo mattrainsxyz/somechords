@@ -7,9 +7,9 @@ struct PianoKeyboardLayout {
     let height: CGFloat
 
     init(availableWidth: CGFloat, height: CGFloat = 210) {
-        // 72 * 0.62 gives black keys a touch width greater than 44 points.
-        whiteKeyWidth = max(72, availableWidth / CGFloat(PianoNote.whiteKeys.count))
-        self.height = height
+        // Fit every key into the proposed bounds, without a minimum scroll width.
+        whiteKeyWidth = max(0, availableWidth) / CGFloat(PianoNote.whiteKeys.count)
+        self.height = max(0, height)
     }
 
     var width: CGFloat { whiteKeyWidth * CGFloat(PianoNote.whiteKeys.count) }

@@ -1,6 +1,6 @@
 # Dekhenge — Phase 2
 
-A native SwiftUI notebook for piano players. The song library uses local SwiftData persistence. Phase 2 adds a reusable two-octave keyboard and temporary note selection. Saving, displaying, and editing song chords remain for Phase 3.
+A native SwiftUI notebook for piano players. The song library uses local SwiftData persistence. Phase 2 adds a reusable F2–B4 keyboard and temporary note selection. Saving, displaying, and editing song chords remain for Phase 3.
 
 ## Open and run
 
@@ -9,7 +9,7 @@ A native SwiftUI notebook for piano players. The song library uses local SwiftDa
 3. Choose **Product > Run** (Command-R). The app appears as **Dekhenge**.
 4. For a physical device, select the app target's **Signing & Capabilities**, choose your development team, and replace the placeholder bundle identifier with your own unique identifier.
 
-The project targets iOS/iPadOS 26.0 and later, with both device families enabled. iPhone supports portrait and landscape; iPad supports all orientations. The starter uses Xcode's `project.xcproj` format; development was verified with Xcode 27.2. There are no packages, network services, iCloud capabilities, or accounts to configure.
+The project targets iOS/iPadOS 26.0 and later, with both device families enabled. iPhone and iPad declare portrait-only support; landscape orientations are disabled. The starter uses Xcode's `project.xcproj` format; development was verified with Xcode 27.2. There are no packages, network services, iCloud capabilities, or accounts to configure.
 
 ## Repository layout
 
@@ -45,7 +45,7 @@ Tests/
 
 SwiftData is the single source of truth for saved songs. `@Query` observes the library, and `@State` holds temporary form text and presentation state. There is no separate view-model or service layer. New Swift source files in the app's synchronized folder are automatically included in its target.
 
-`Song` stores a unique UUID, title, creation date, modification date, and chords. `Chord` stores a unique UUID, optional label, normalized `[Int]` MIDI notes, integer position, and parent song. The relationship has an explicit inverse and cascade deletion. Chords are sorted by position when read; SwiftData relationship array order is not treated as persistent ordering. Notes are deduplicated, sorted, and limited to MIDI 48–71. The chord model is established now without adding chord UI before its scheduled phase.
+`Song` stores a unique UUID, title, creation date, modification date, and chords. `Chord` stores a unique UUID, optional label, normalized `[Int]` MIDI notes, integer position, and parent song. The relationship has an explicit inverse and cascade deletion. Chords are sorted by position when read; SwiftData relationship array order is not treated as persistent ordering. Notes are deduplicated, sorted, and limited to MIDI 41–71. The chord model is established now without adding chord UI before its scheduled phase.
 
 Each mutation explicitly saves. Failed saves roll back and show an error; failed renames also restore observed title/date values because the installed SwiftData runtime leaves these values stale after rollback. Cancel never edits a persisted model. Blank or whitespace-only titles cannot be saved. Duplicate song titles are allowed because songs have separate IDs.
 
@@ -53,61 +53,56 @@ The store is on disk in the application's sandbox, with CloudKit explicitly disa
 
 ## Try the Phase 2 keyboard
 
-Create or open a song, then choose **Try the Keyboard**. Tap multiple white and black keys and read the selected names, including their octaves. Tap a selected key again to remove it; **Clear** removes the selection. **Done** closes the screen. Selections are temporary, are not attached to the song, and start empty each time this screen opens.
+Create or open a song, then choose **Try the Keyboard**. The entire keyboard screen remains rotated 90 degrees clockwise within the portrait interface. Notes run from F2 at the top to B4 at the bottom. The screen contains the keyboard and a navigation bar with **Clear** and **Done**. There are no introductory or selected-note sections, and no horizontal or vertical scroll views.
 
-The keyboard covers C3–B4 (MIDI 48–71), with C4 at MIDI 60. `PianoNote` supplies the range used by both saved chord normalization and keyboard rendering. `PianoKeyboardLayout` calculates white/black key frames independently of SwiftUI state. Black buttons have a higher stacking order than white buttons, with rectangular hit regions matching their frames. White keys are at least 72 points wide; black keys are at least 44.64 points wide. Narrow screens scroll horizontally; wide screens expand the keys to fill the available width. The selection screen opens full screen and rotates its entire interface 90 degrees clockwise. Its layout dimensions are swapped before rotation so controls stay within the available area. In portrait, the notes run from top to bottom and the keyboard scrolls along that direction; keyboard taps and the Done/Clear controls rotate with the screen.
+Tap keys to toggle any combination of notes. **Clear** removes the selection; **Done** closes the screen. Selections are temporary and start empty when the screen is reopened. Saving song chords remains Phase 3 work.
 
-Selected keys use a deep indigo fill and a checkmark, with white note labels. Unselected piano keys retain their familiar black/white appearance in light and dark modes. VoiceOver labels include the note and octave, selection value, selected trait, and toggle hint. The keyboard's note order stays left to right in all interface languages. The surrounding descriptions and note summary support Dynamic Type; physical key labels use fixed-size text, with full note names exposed to VoiceOver and in the scalable summary.
+The fixed range is F2–B4, MIDI 41–71: 18 white keys and 13 black keys. White keys display their letter only. Black keys display both enharmonic names on separate lines, such as F♯ and G♭. Octaves are retained in MIDI values and VoiceOver descriptions, allowing repeated notes to remain distinguishable without printed octave numbers.
 
-`PianoKeyboardView(selectedNotes: $notes)` edits a `Set<Int>` binding. `PianoKeyboardView(selectedNotes: .constant(notes), isInteractive: false)` renders the same key layout without controls and exposes a combined selected-note accessibility description. Interactive and read-only Xcode previews are included. Compact saved diagrams will be integrated in Phase 3.
+`PianoNote` supplies the range shared by saved chord normalization and keyboard rendering. `PianoKeyboardLayout` calculates white/black frames independently of UI state. Black buttons have a higher stacking order and rectangular hit regions matching their visible frames. Every key scales to the available width and height; there is no minimum width that would force scrolling. On small phones this means narrower touch targets than the previous scrolling keyboard. Selected keys use deep indigo with a checkmark. Key labels scale to fit, while native navigation controls support Dynamic Type.
+
+`PianoKeyboardView(selectedNotes: $notes)` edits a `Set<Int>` binding and fills the space proposed by its parent. Give it an explicit height when embedding it in content that does not constrain height. `PianoKeyboardView(selectedNotes: .constant(notes), isInteractive: false)` uses the same layout without tap controls and exposes a combined selection description. Compact saved diagrams will be integrated in Phase 3.
 
 ## Live UI iteration with SwiftUI Previews
 
-For UI edits, use Xcode's canvas instead of relaunching the full app in Device Hub:
-
 1. Open `Dekhenge/Views/KeyboardSelectionView.swift` in Xcode.
-2. Click **Show Canvas** in the editor toolbar (or choose **Editor > Canvas**).
-3. Select **Keyboard screen** from the named previews. If it is paused, choose **Resume**. Use the canvas's live/interactive mode to tap keys and try Clear.
-4. Choose an iPhone or iPad using the **Preview Device** menu at the lower-right of the canvas. The **Dark appearance**, **Landscape**, and **Larger text** previews provide repeatable configurations. Canvas **Device Settings** and **Variants** offer further combinations.
-5. Leave the file and canvas open while editing. Xcode updates the preview as saved Swift source changes; it may need an initial build or a new build for larger structural changes.
+2. Click **Show Canvas** in the editor toolbar, or choose **Editor > Canvas**.
+3. Choose **Keyboard screen**, **Dark appearance**, or **Larger text**. If paused, refresh the canvas. Use Live mode to tap keys and try Clear.
+4. Use the canvas's **Preview Device** menu to switch between iPhone and iPad. There is no landscape preview, matching the app's portrait configuration.
+5. Leave the file and canvas open while editing. Xcode updates saved UI changes; the initial preview startup and structural changes may require a build.
 
-For isolated key styling and tap selection, open `Dekhenge/Components/PianoKeyboardView.swift`. **Interactive keyboard** shows live selected-note feedback; **Black keys · Dark** starts with sharp notes selected; **Wide layout** checks fitting both octaves into 1150 points (a layout check, not an iPad device emulation); **Read only** checks display mode. Previews use temporary selection state and do not read or write your notebook. The standalone keyboard-screen preview's Done button has no presenting sheet to dismiss; verify dismissal using the actual app.
+For isolated styling, open `Dekhenge/Components/PianoKeyboardView.swift`. **Interactive keyboard** and **Black keys · Dark** start with sample selections; **Wide layout** checks the component at 1150 points of width; **Read only** checks display mode. These component previews use fixed layout sizes, not device emulation. Previews use temporary selection state and do not change your notebook. The standalone screen preview's Done button has no presenting sheet to dismiss; verify dismissal in the actual app.
 
-The preview configurations compile with the app. The **Keyboard screen** preview was opened in Xcode and visually confirmed rendering the sideways keyboard with Live mode enabled. Automatic refresh across a subsequent edit, the other variants, and tap interactions still need verification. Continue using the full simulator for persistence, navigation, and end-to-end checks.
+The updated F2–B4 keyboard rendered in the live iPhone preview without either removed section or scrolling. Coordinate taps verified black-key selection without selecting adjacent white keys, multiple selections, independent deselection, and Clear. Xcode's preview accessibility tree exposed note names including octaves and both sharp/flat names; full VoiceOver navigation has not been verified. The preview automatically reflected the source changes.
 
 ## Verification
 
-From this project directory, run:
+From the repository root:
 
 ```sh
 bash Tests/run-persistence-checks.sh
 bash Tests/run-keyboard-checks.sh
 ```
 
-This compiles the actual models and container configuration using the macOS SwiftData SDK, writes an isolated temporary database, and checks creation, reopening, title trimming, saved renames/timestamps, persisted rollback state, MIDI normalization, positions, inverse relationships, cascade deletion, and preservation of an unrelated song. It removes only its own temporary files. It is a standalone integration check, not an Xcode test target or UI test.
+The persistence checks use the real models and container configuration with an isolated temporary database. They verify creation, reopening, title trimming, saved renames/timestamps, persisted rollback state, normalization, positions, inverse relationships, cascade deletion, and preservation of unrelated songs. The expanded test chord includes MIDI 41 and 42 to confirm the new low notes survive persistence.
 
-The keyboard checks compile the actual note/layout utilities and verify every note name, all 14 white and 10 black keys, black-key boundaries, the E/F and B/C gaps, octave preservation, valid range, and touch widths at phone and tablet viewport sizes. These checks do not simulate touches or VoiceOver.
+The keyboard checks verify all 31 MIDI values, note names, the 18 white and 13 black keys, both sharp/flat spellings, labels without octave numbers, accessible octave information, black-key boundaries, E/F and B/C gaps, and fitting every key into phone/tablet bounds over multiple widths and heights. These are standalone checks rather than Xcode UI test targets, and remove only their own temporary files.
 
-Verified during implementation:
+Verified:
 
-- Simulator build for arm64 and x86_64 with iOS 26.0 as the deployment target.
-- The persistence integration checks above.
-- The keyboard mapping and geometry checks above.
-- During Phase 1: installation and launch on the iPhone 18 Pro simulator running iOS 27.2; visual inspection of the library empty state.
-- Phase 2 interaction checks remain manual: the Device Hub interface connection timed out during verification.
+- Simulator build for arm64 and x86_64, with iOS 26.0 as the minimum deployment target.
+- Both automated suites above.
+- Portrait-only orientation lists in the built app for both device families.
+- Live iPhone preview rendering, selection/deselection, multi-selection, Clear, and automatic refresh.
 
-Still to verify by hand:
+Remaining hands-on checks:
 
-1. Create **My First Song**, save, and open its empty page.
-2. Return to the library, swipe left on its row, and choose **Rename**. Save a new title.
-3. Start another rename, change the draft, and cancel; confirm the saved title stays intact.
-4. Create a second song. Force quit and relaunch; confirm both are present.
-5. Swipe a row and choose **Delete**. Cancel once, then confirm deletion. Verify the other song remains.
-6. Repeat on iPad portrait and landscape, with dark appearance and larger text. Check VoiceOver access to creation and row actions.
-7. Open **Try the Keyboard**. Select C3 and C4 together, then deselect C3 and confirm C4 remains selected. Select C♯3 at its center and edges; confirm neither C3 nor D3 toggles. Repeat with other black keys.
-8. Scroll to the second octave and select C4, E4, and G4 (MIDI 60, 64, 67). Confirm the three highlights match the names. Select every key, toggle individual notes off, and try **Clear**. Scrolling should not toggle notes.
-9. Close and reopen the keyboard: the temporary selection should be empty and the song should still have zero chords. Repeat on iPad in portrait and landscape, in dark appearance, at larger text sizes, and with VoiceOver. When the rotated keyboard has at least 1008 points of space along its note axis, both octaves should fit without scrolling. Check that Done and Clear remain accessible and black-key taps still select only the intended note after rotation.
-10. In Xcode's **Read only** preview, confirm keys have no tap actions and the selected-note description is accessible.
-11. Run on an iOS 26 device or simulator. Only iOS 27.2 simulator runtimes were available during implementation.
+1. Create **My First Song**, open it, rename it, and confirm canceling a title draft does not change saved data.
+2. Create a second song, force quit, and relaunch. Delete one song with confirmation and verify the other remains.
+3. In the keyboard, select F2 and F3 together and toggle only one off. Check the first F2 and last B4 remain fully visible, along with all black-key spellings.
+4. Check iPad, the smallest supported iPhone, dark appearance, larger text, and VoiceOver. Verify key edges select only the intended note.
+5. Rotate a device while the library and keyboard are open. Verify the portrait interface stays fixed and the keyboard keeps its clockwise orientation. Orientation capability changes require rebuilding/relaunching the app; a canvas refresh alone does not validate them.
+6. Verify Done closes the keyboard and reopening clears temporary selections.
+7. Test on an iOS 26 device or simulator. The installed simulator runtime used during development is iOS 27.2.
 
-Save-error alerts and startup-error retry UI compile, but have not been tested through injected storage failures. Device signing, app icon artwork, App Store setup, and deployment remain future work.
+Storage-failure alerts, device signing, app icon artwork, App Store setup, and deployment remain unverified or future work.

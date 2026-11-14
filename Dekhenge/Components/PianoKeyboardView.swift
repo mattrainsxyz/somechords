@@ -5,32 +5,27 @@ struct PianoKeyboardView: View {
     @Binding var selectedNotes: Set<Int>
     var isInteractive = true
 
-    private let keyboardHeight: CGFloat = 210
-
     var body: some View {
         GeometryReader { geometry in
-            let layout = PianoKeyboardLayout(availableWidth: geometry.size.width)
-            ScrollView(.horizontal) {
-                ZStack(alignment: .topLeading) {
-                    ForEach(PianoNote.whiteKeys) { note in
-                        key(note, layout: layout)
-                    }
-                    ForEach(PianoNote.blackKeys) { note in
-                        key(note, layout: layout)
-                    }
+            let layout = PianoKeyboardLayout(
+                availableWidth: geometry.size.width, height: geometry.size.height
+            )
+            ZStack(alignment: .topLeading) {
+                ForEach(PianoNote.whiteKeys) { note in
+                    key(note, layout: layout)
                 }
-                .frame(width: layout.width, height: keyboardHeight)
-                .background(.black)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                ForEach(PianoNote.blackKeys) { note in
+                    key(note, layout: layout)
+                }
             }
-            .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
+            .frame(width: layout.width, height: layout.height)
+            .background(.black)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
             .environment(\.layoutDirection, .leftToRight)
             .accessibilityElement(children: isInteractive ? .contain : .ignore)
-            .accessibilityLabel(isInteractive ? "Piano keyboard, C3 through B4" : "Piano diagram, C3 through B4")
+            .accessibilityLabel(isInteractive ? "Piano keyboard, F2 through B4" : "Piano diagram, F2 through B4")
             .accessibilityValue(isInteractive ? "" : selectionDescription)
         }
-        // Space below the keys keeps the scroll indicator clear of their labels.
-        .frame(height: keyboardHeight + 16)
     }
 
     private var selectionDescription: String {
@@ -48,7 +43,7 @@ struct PianoKeyboardView: View {
                     if selected { selectedNotes.remove(note.midi) }
                     else { selectedNotes.insert(note.midi) }
                 } label: {
-                    PianoKeyFace(note: note, selected: selected)
+                    PianoKeyFace(note: note, selected: selected, keyWidth: frame.width)
                         .frame(width: frame.width, height: frame.height)
                         .contentShape(Rectangle())
                 }
@@ -59,7 +54,7 @@ struct PianoKeyboardView: View {
                 .accessibilityHint("Double-tap to \(selected ? "deselect" : "select") this note.")
                 .accessibilityIdentifier("pianoKey_\(note.midi)")
             } else {
-                PianoKeyFace(note: note, selected: selected)
+                PianoKeyFace(note: note, selected: selected, keyWidth: frame.width)
                     .frame(width: frame.width, height: frame.height)
             }
         }
@@ -74,6 +69,7 @@ struct PianoKeyboardView: View {
 private struct PianoKeyFace: View {
     let note: PianoNote
     let selected: Bool
+    let keyWidth: CGFloat
 
     private var foreground: Color { selected || note.isBlack ? .white : .black }
     private var fill: Color {
@@ -89,47 +85,45 @@ private struct PianoKeyFace: View {
                     .strokeBorder(note.isBlack ? .black : Color(white: 0.45), lineWidth: 1)
             }
             .overlay(alignment: .bottom) {
-                VStack(spacing: 7) {
+                VStack(spacing: 4) {
                     if selected {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.system(size: min(16, max(8, keyWidth * 0.4)), weight: .semibold))
                     }
-                    Text(note.name)
-                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    VStack(spacing: 2) {
+                        Text(note.sharpName)
+                        if note.isBlack { Text(note.flatName) }
+                    }
+                    .font(.system(size: min(14, max(9, keyWidth * 0.35)), weight: .semibold, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 2)
                 }
                 .foregroundStyle(foreground)
-                .padding(.bottom, 12)
+                .padding(.bottom, min(12, max(3, keyWidth * 0.2)))
             }
             .accessibilityHidden(true)
     }
 }
 
-#Preview("Interactive keyboard") {
-    @Previewable @State var notes: Set<Int> = [60, 64, 67]
-    VStack(alignment: .leading, spacing: 16) {
-        PianoKeyboardView(selectedNotes: $notes)
-        Text(notes.isEmpty ? "No notes selected" : PianoNote.names(for: notes))
-            .font(.headline)
-    }
-    .padding()
+#Preview("Interactive keyboard", traits: .fixedLayout(width: 780, height: 280)) {
+    @Previewable @State var notes: Set<Int> = [41, 60, 64, 67]
+    PianoKeyboardView(selectedNotes: $notes).padding(12)
 }
 
-#Preview("Black keys · Dark") {
-    @Previewable @State var notes: Set<Int> = [49, 54, 58, 61, 66, 70]
-    VStack(alignment: .leading, spacing: 16) {
-        PianoKeyboardView(selectedNotes: $notes)
-        Text(notes.isEmpty ? "No notes selected" : PianoNote.names(for: notes))
-            .font(.headline)
-    }
-    .padding()
-    .preferredColorScheme(.dark)
+#Preview("Black keys · Dark", traits: .fixedLayout(width: 780, height: 280)) {
+    @Previewable @State var notes: Set<Int> = [42, 46, 49, 54, 58, 61, 66, 70]
+    PianoKeyboardView(selectedNotes: $notes)
+        .padding(12)
+        .preferredColorScheme(.dark)
 }
 
-#Preview("Wide layout", traits: .fixedLayout(width: 1150, height: 300)) {
-    @Previewable @State var notes: Set<Int> = [48, 60, 64, 67, 71]
-    PianoKeyboardView(selectedNotes: $notes).padding()
+#Preview("Wide layout", traits: .fixedLayout(width: 1150, height: 400)) {
+    @Previewable @State var notes: Set<Int> = [41, 48, 60, 64, 67, 71]
+    PianoKeyboardView(selectedNotes: $notes).padding(12)
 }
 
-#Preview("Read only") {
-    PianoKeyboardView(selectedNotes: .constant([49, 60, 71]), isInteractive: false).padding()
+#Preview("Read only", traits: .fixedLayout(width: 780, height: 280)) {
+    PianoKeyboardView(selectedNotes: .constant([42, 60, 71]), isInteractive: false).padding(12)
 }
