@@ -20,7 +20,6 @@ struct KeyboardSelectionView: View {
         NavigationStack {
             PianoKeyboardView(selectedNotes: $selectedNotes)
                 .padding(12)
-                .navigationTitle("Piano Keyboard")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {

@@ -85,21 +85,15 @@ private struct PianoKeyFace: View {
                     .strokeBorder(note.isBlack ? .black : Color(white: 0.45), lineWidth: 1)
             }
             .overlay(alignment: .bottom) {
-                VStack(spacing: 4) {
-                    if selected {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: min(16, max(8, keyWidth * 0.4)), weight: .semibold))
-                    }
-                    VStack(spacing: 2) {
-                        Text(note.sharpName)
-                        if note.isBlack { Text(note.flatName) }
-                    }
-                    .font(.system(size: min(14, max(9, keyWidth * 0.35)), weight: .semibold, design: .rounded))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.5)
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, 2)
+                VStack(spacing: 2) {
+                    Text(note.sharpName)
+                    if note.isBlack { Text(note.flatName) }
                 }
+                .font(.system(size: min(14, max(9, keyWidth * 0.35)), weight: .semibold, design: .rounded))
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 2)
                 .foregroundStyle(foreground)
                 .padding(.bottom, min(12, max(3, keyWidth * 0.2)))
             }
