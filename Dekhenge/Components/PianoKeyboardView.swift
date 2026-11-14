@@ -104,8 +104,29 @@ private struct PianoKeyFace: View {
     }
 }
 
-#Preview("Interactive") {
+#Preview("Interactive keyboard") {
     @Previewable @State var notes: Set<Int> = [60, 64, 67]
+    VStack(alignment: .leading, spacing: 16) {
+        PianoKeyboardView(selectedNotes: $notes)
+        Text(notes.isEmpty ? "No notes selected" : PianoNote.names(for: notes))
+            .font(.headline)
+    }
+    .padding()
+}
+
+#Preview("Black keys · Dark") {
+    @Previewable @State var notes: Set<Int> = [49, 54, 58, 61, 66, 70]
+    VStack(alignment: .leading, spacing: 16) {
+        PianoKeyboardView(selectedNotes: $notes)
+        Text(notes.isEmpty ? "No notes selected" : PianoNote.names(for: notes))
+            .font(.headline)
+    }
+    .padding()
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Wide layout", traits: .fixedLayout(width: 1150, height: 300)) {
+    @Previewable @State var notes: Set<Int> = [48, 60, 64, 67, 71]
     PianoKeyboardView(selectedNotes: $notes).padding()
 }
 

@@ -61,6 +61,20 @@ Selected keys use a deep indigo fill and a checkmark, with white note labels. Un
 
 `PianoKeyboardView(selectedNotes: $notes)` edits a `Set<Int>` binding. `PianoKeyboardView(selectedNotes: .constant(notes), isInteractive: false)` renders the same key layout without controls and exposes a combined selected-note accessibility description. Interactive and read-only Xcode previews are included. Compact saved diagrams will be integrated in Phase 3.
 
+## Live UI iteration with SwiftUI Previews
+
+For UI edits, use Xcode's canvas instead of relaunching the full app in Device Hub:
+
+1. Open `Dekhenge/Views/KeyboardSelectionView.swift` in Xcode.
+2. Click **Show Canvas** in the editor toolbar (or choose **Editor > Canvas**).
+3. Select **Keyboard screen** from the named previews. If it is paused, choose **Resume**. Use the canvas's live/interactive mode to tap keys and try Clear.
+4. Choose an iPhone or iPad using the **Preview Device** menu at the lower-right of the canvas. The **Dark appearance**, **Landscape**, and **Larger text** previews provide repeatable configurations. Canvas **Device Settings** and **Variants** offer further combinations.
+5. Leave the file and canvas open while editing. Xcode updates the preview as saved Swift source changes; it may need an initial build or a new build for larger structural changes.
+
+For isolated key styling and tap selection, open `Dekhenge/Components/PianoKeyboardView.swift`. **Interactive keyboard** shows live selected-note feedback; **Black keys · Dark** starts with sharp notes selected; **Wide layout** checks fitting both octaves into 1150 points (a layout check, not an iPad device emulation); **Read only** checks display mode. Previews use temporary selection state and do not read or write your notebook. The standalone keyboard-screen preview's Done button has no presenting sheet to dismiss; verify dismissal using the actual app.
+
+The preview configurations compile with the app. The **Keyboard screen** preview was opened in Xcode and visually confirmed rendering the sideways keyboard with Live mode enabled. Automatic refresh across a subsequent edit, the other variants, and tap interactions still need verification. Continue using the full simulator for persistence, navigation, and end-to-end checks.
+
 ## Verification
 
 From this project directory, run:

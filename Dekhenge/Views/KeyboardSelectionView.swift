@@ -62,4 +62,24 @@ struct KeyboardSelectionView: View {
     }
 }
 
-#Preview { KeyboardSelectionView() }
+#Preview("Keyboard screen", traits: .portrait) {
+    KeyboardSelectionView()
+        .tint(.indigo)
+}
+
+#Preview("Dark appearance", traits: .portrait) {
+    KeyboardSelectionView()
+        .tint(.indigo)
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Landscape", traits: .landscapeRight) {
+    KeyboardSelectionView()
+        .tint(.indigo)
+}
+
+#Preview("Larger text", traits: .portrait) {
+    KeyboardSelectionView()
+        .tint(.indigo)
+        .environment(\.dynamicTypeSize, .accessibility1)
+}
