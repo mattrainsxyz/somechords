@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 @main
-struct ChordNotebookApp: App {
+struct DekhengeApp: App {
     @State private var container: ModelContainer?
     @State private var storageError: String?
 

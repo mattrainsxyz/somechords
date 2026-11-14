@@ -1,4 +1,4 @@
-# Chord Notebook — Phase 1
+# Dekhenge — Phase 1
 
 A native SwiftUI notebook for piano players. This milestone implements the song library with local SwiftData persistence. Piano selection and chord editing remain for Phases 2–4.
 
@@ -6,10 +6,10 @@ A native SwiftUI notebook for piano players. This milestone implements the song 
 
 1. Open `Dekhenge.xcodeproj` in Xcode (the existing project and scheme retain the starter name).
 2. Select the **Dekhenge** scheme and an iPhone or iPad simulator.
-3. Choose **Product > Run** (Command-R). The app appears as **Chord Notebook**.
+3. Choose **Product > Run** (Command-R). The app appears as **Dekhenge**.
 4. For a physical device, select the app target's **Signing & Capabilities**, choose your development team, and replace the placeholder bundle identifier with your own unique identifier.
 
-The project targets iOS/iPadOS 17.0 and later, with both device families enabled. iPhone supports portrait and landscape; iPad supports all orientations. The starter uses Xcode's `project.xcproj` format; development was verified with Xcode 27.2. There are no packages, network services, iCloud capabilities, or accounts to configure.
+The project targets iOS/iPadOS 26.0 and later, with both device families enabled. iPhone supports portrait and landscape; iPad supports all orientations. The starter uses Xcode's `project.xcproj` format; development was verified with Xcode 27.2. There are no packages, network services, iCloud capabilities, or accounts to configure.
 
 ## Repository layout
 
@@ -20,7 +20,7 @@ Open the project from the repository root. `Dekhenge.xcodeproj`, `Dekhenge/` (ap
 ```text
 Dekhenge/
   App/
-    ChordNotebookApp.swift   # Entry point, storage loading/error UI
+    DekhengeApp.swift   # Entry point, storage loading/error UI
     NotebookStore.swift      # Local-only container shared by views
   Models/
     Song.swift               # Song identity, title, timestamps, cascade relationship
@@ -55,7 +55,7 @@ This compiles the actual models and container configuration using the macOS Swif
 
 Verified during implementation:
 
-- Simulator build for arm64 and x86_64 with iOS 17.0 as the deployment target.
+- Simulator build for arm64 and x86_64 with iOS 26.0 as the deployment target.
 - The persistence integration checks above.
 - Installation and launch on the iPhone 18 Pro simulator running iOS 27.2; visual inspection of the library empty state.
 
@@ -67,6 +67,6 @@ Still to verify by hand:
 4. Create a second song. Force quit and relaunch; confirm both are present.
 5. Swipe a row and choose **Delete**. Cancel once, then confirm deletion. Verify the other song remains.
 6. Repeat on iPad portrait and landscape, with dark appearance and larger text. Check VoiceOver access to creation and row actions.
-7. Run on an iOS 17 device or simulator. Only iOS 27.2 simulator runtimes were available during implementation.
+7. Run on an iOS 26 device or simulator. Only iOS 27.2 simulator runtimes were available during implementation.
 
 Save-error alerts and startup-error retry UI compile, but have not been tested through injected storage failures. Device signing, app icon artwork, App Store setup, and deployment remain future work.
