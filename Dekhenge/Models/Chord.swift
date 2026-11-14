@@ -23,6 +23,6 @@ final class Chord {
     }
 
     private static func normalized(_ notes: [Int]) -> [Int] {
-        Array(Set(notes.filter { (48...71).contains($0) })).sorted()
+        Array(Set(notes.filter { PianoNote.midiRange.contains($0) })).sorted()
     }
 }
