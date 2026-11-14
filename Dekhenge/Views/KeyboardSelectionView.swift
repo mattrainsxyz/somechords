@@ -6,6 +6,17 @@ struct KeyboardSelectionView: View {
     @State private var selectedNotes: Set<Int> = []
 
     var body: some View {
+        GeometryReader { geometry in
+            keyboardScreen
+                // Lay out using the rotated dimensions before transforming the screen.
+                .frame(width: geometry.size.height, height: geometry.size.width)
+                .rotationEffect(.degrees(90))
+                .frame(width: geometry.size.width, height: geometry.size.height)
+                .clipped()
+        }
+    }
+
+    private var keyboardScreen: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
