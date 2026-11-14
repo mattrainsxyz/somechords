@@ -17,7 +17,9 @@ struct PersistenceChecks {
         let editingSongID = try createChordSequence(at: url)
         try verifyChordEditingAndDeletion(at: url, id: editingSongID)
         try verifyEditedSequenceReopened(at: url, id: editingSongID)
-        print("PASS: create, disk reopen, title trimming, rename, rollback, normalized MIDI notes, positions, cascade deletion, unrelated data preservation, draft cancellation, empty selection rejection, chord create/edit/delete, labels, append positions, cross-song isolation.")
+        let reordered = try verifyReordering(at: url)
+        try verifyReorderingReopened(at: url, songID: reordered.0, ids: reordered.1)
+        print("PASS: create, disk reopen, title trimming, rename, rollback, normalized MIDI notes, positions, cascade deletion, unrelated data preservation, draft cancellation, empty selection rejection, chord create/edit/delete, labels, append positions, cross-song isolation, complete-sequence reordering, invalid order rejection, deletion compaction, long sequence reopen.")
     }
 
     @MainActor
@@ -145,7 +147,7 @@ struct PersistenceChecks {
         try song.deleteChord(song.orderedChords[0], in: context)
         precondition(song.orderedChords.map(\.notes) == [[43, 50, 53]])
         try song.saveChord(ChordDraft(label: "Ending", notes: [45, 52, 59]), editing: nil, in: context)
-        precondition(song.orderedChords.map(\.position) == [1, 2])
+        precondition(song.orderedChords.map(\.position) == [0, 1])
         precondition(unrelatedChord.notes == [47, 55] && unrelatedChord.label == "Keep")
     }
 
@@ -155,10 +157,97 @@ struct PersistenceChecks {
         let songs = try container.mainContext.fetch(FetchDescriptor<Song>())
         let song = songs.first { $0.id == id }!
         precondition(song.orderedChords.map(\.notes) == [[43, 50, 53], [45, 52, 59]])
-        precondition(song.orderedChords.map(\.position) == [1, 2])
+        precondition(song.orderedChords.map(\.position) == [0, 1])
         precondition(song.orderedChords[1].label == "Ending")
         let unrelated = songs.first { $0.id != id }!
         precondition(unrelated.chords.count == 1 && unrelated.chords[0].label == "Keep")
+    }
+
+
+    @MainActor
+    static func verifyReordering(at url: URL) throws -> (UUID, [UUID]) {
+        let container = try NotebookStore.makeContainer(at: url)
+        let context = container.mainContext
+        let song = Song(title: "Long Sequence", now: .distantPast)
+        context.insert(song)
+        for index in 0..<64 {
+            // Gapped positions exercise compaction of previously saved Phase 3 data.
+            context.insert(Chord(label: "Step \(index)", notes: [41 + index % 19], position: index * 2, song: song))
+        }
+        try context.save()
+        let original = song.orderedChords
+        let ids = original.map(\.id)
+        let originalNotes = Dictionary(uniqueKeysWithValues: original.map { ($0.id, $0.notes) })
+        let originalLabels = Dictionary(uniqueKeysWithValues: original.map { ($0.id, $0.label) })
+        let unrelatedSongs = try context.fetch(FetchDescriptor<Song>()).filter { $0.id != song.id }
+        let unrelatedOrders = unrelatedSongs.map { $0.orderedChords.map(\.id) }
+
+        for invalid in [Array(ids.dropLast()), ids + [ids[0]], [UUID()] + Array(ids.dropFirst()), Array(repeating: ids[0], count: ids.count)] {
+            do {
+                try song.reorderChords(invalid, in: context)
+                preconditionFailure("Incomplete, duplicate, and foreign IDs must be rejected")
+            } catch Song.ChordEditingError.invalidOrder { }
+            precondition(song.orderedChords.map(\.id) == ids)
+            precondition(song.updatedAt == .distantPast && !context.hasChanges)
+        }
+        var order = ids
+        order.insert(order.removeLast(), at: 0) // Last to first.
+        try song.reorderChords(order, in: context)
+        precondition(song.orderedChords.map(\.id) == order)
+        precondition(song.orderedChords.map(\.position) == Array(0..<64))
+        precondition(song.updatedAt > .distantPast)
+        order.append(order.removeFirst()) // First to last.
+        try song.reorderChords(order, in: context)
+        // Move two non-adjacent chords together to a different part of the sequence.
+        let moved = [order[2], order[5]]
+        order.remove(at: 5)
+        order.remove(at: 2)
+        order.insert(contentsOf: moved, at: 12)
+        try song.reorderChords(order, in: context)
+        for chord in song.chords {
+            precondition(chord.notes == originalNotes[chord.id])
+            precondition(chord.label == originalLabels[chord.id]!)
+            precondition(chord.song?.id == song.id)
+        }
+        let dateBeforeNoOp = song.updatedAt
+        try song.reorderChords(order, in: context)
+        precondition(song.updatedAt == dateBeforeNoOp && !context.hasChanges)
+
+        // Delete from the middle of a reordered sequence and append another chord.
+        let removed = song.orderedChords[10]
+        order.remove(at: 10)
+        try song.deleteChord(removed, in: context)
+        precondition(song.orderedChords.map(\.id) == order)
+        precondition(song.orderedChords.map(\.position) == Array(0..<63))
+        try song.saveChord(ChordDraft(label: "Appended", notes: [41, 59]), editing: nil, in: context)
+        let appended = song.orderedChords.last!
+        order.append(appended.id)
+        precondition(appended.position == 63)
+        precondition(unrelatedSongs.map { $0.orderedChords.map(\.id) } == unrelatedOrders)
+        return (song.id, order)
+    }
+
+    @MainActor
+    static func verifyReorderingReopened(at url: URL, songID: UUID, ids: [UUID]) throws {
+        let container = try NotebookStore.makeContainer(at: url)
+        let context = container.mainContext
+        let song = try context.fetch(FetchDescriptor<Song>()).first { $0.id == songID }!
+        precondition(song.orderedChords.map(\.id) == ids)
+        precondition(song.orderedChords.map(\.position) == Array(0..<64))
+        precondition(song.orderedChords.last?.notes == [41, 59])
+        // Empty and single-chord sequences have no meaningful move and stay valid.
+        let empty = Song(title: "Empty")
+        context.insert(empty)
+        try context.save()
+        let unchangedDate = empty.updatedAt
+        try empty.reorderChords([], in: context)
+        precondition(empty.updatedAt == unchangedDate)
+        try empty.saveChord(ChordDraft(notes: [48]), editing: nil, in: context)
+        let onlyChord = empty.chords[0]
+        try empty.reorderChords([onlyChord.id], in: context)
+        precondition(onlyChord.position == 0)
+        try empty.deleteChord(onlyChord, in: context)
+        precondition(empty.chords.isEmpty)
     }
 
 }

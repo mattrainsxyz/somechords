@@ -5,11 +5,13 @@ extension Song {
     enum ChordEditingError: LocalizedError {
         case emptySelection
         case wrongSong
+        case invalidOrder
 
         var errorDescription: String? {
             switch self {
             case .emptySelection: "Select at least one note before saving."
             case .wrongSong: "This chord no longer belongs to this song."
+            case .invalidOrder: "The chord sequence changed. Please try moving the chord again."
             }
         }
     }
@@ -53,9 +55,13 @@ extension Song {
         guard chord.song?.id == id, !chord.isDeleted else { throw ChordEditingError.wrongSong }
         let previousDate = updatedAt
         let previousChords = chords
+        let previousPositions = previousChords.map { ($0, $0.position) }
         // Update the observed relationship immediately instead of waiting for store refresh.
         chords.removeAll { $0.id == chord.id }
         context.delete(chord)
+        for (position, remaining) in orderedChords.enumerated() {
+            remaining.position = position
+        }
         updatedAt = .now
         do {
             try context.save()
@@ -63,8 +69,40 @@ extension Song {
             context.processPendingChanges()
             context.rollback()
             chords = previousChords
+            for (chord, position) in previousPositions { chord.position = position }
             updatedAt = previousDate
             throw error
         }
     }
+
+    /// Save a complete permutation so a stale or partial UI request cannot drop chords.
+    @MainActor
+    func reorderChords(_ orderedIDs: [UUID], in context: ModelContext) throws {
+        let current = orderedChords
+        guard orderedIDs.count == current.count,
+              Set(orderedIDs).count == orderedIDs.count,
+              Set(orderedIDs) == Set(current.map(\.id)) else {
+            throw ChordEditingError.invalidOrder
+        }
+        guard orderedIDs != current.map(\.id) || current.enumerated().contains(where: {
+            $0.element.position != $0.offset
+        }) else { return }
+        let byID = Dictionary(uniqueKeysWithValues: current.map { ($0.id, $0) })
+        let previousPositions = current.map { ($0, $0.position) }
+        let previousDate = updatedAt
+        for (position, id) in orderedIDs.enumerated() {
+            byID[id]?.position = position
+        }
+        updatedAt = .now
+        do {
+            try context.save()
+        } catch {
+            context.processPendingChanges()
+            context.rollback()
+            for (chord, position) in previousPositions { chord.position = position }
+            updatedAt = previousDate
+            throw error
+        }
+    }
+
 }
