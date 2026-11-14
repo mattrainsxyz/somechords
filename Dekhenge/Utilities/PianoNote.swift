@@ -1,8 +1,8 @@
 import Foundation
 
-/// Uses the convention C4 = MIDI 60. The fixed keyboard is F2 through B4.
+/// Uses the convention C4 = MIDI 60. The fixed keyboard is F2 through B3.
 struct PianoNote: Identifiable, Hashable {
-    static let midiRange = 41...71
+    static let midiRange = 41...59
     static let all = midiRange.map { PianoNote(midi: $0)! }
     static let whiteKeys = all.filter { !$0.isBlack }
     static let blackKeys = all.filter(\.isBlack)

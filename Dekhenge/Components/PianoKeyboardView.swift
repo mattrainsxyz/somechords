@@ -23,7 +23,7 @@ struct PianoKeyboardView: View {
             .clipShape(RoundedRectangle(cornerRadius: 8))
             .environment(\.layoutDirection, .leftToRight)
             .accessibilityElement(children: isInteractive ? .contain : .ignore)
-            .accessibilityLabel(isInteractive ? "Piano keyboard, F2 through B4" : "Piano diagram, F2 through B4")
+            .accessibilityLabel(isInteractive ? "Piano keyboard, F2 through B3" : "Piano diagram, F2 through B3")
             .accessibilityValue(isInteractive ? "" : selectionDescription)
         }
     }
@@ -62,7 +62,7 @@ struct PianoKeyboardView: View {
         .position(x: frame.midX, y: frame.midY)
         // Black buttons are above the white buttons, including for hit testing.
         .zIndex(note.isBlack ? 1 : 0)
-        .accessibilitySortPriority(Double(72 - note.midi))
+        .accessibilitySortPriority(Double(PianoNote.midiRange.upperBound + 1 - note.midi))
     }
 }
 
@@ -108,22 +108,22 @@ private struct PianoKeyFace: View {
 }
 
 #Preview("Interactive keyboard", traits: .fixedLayout(width: 780, height: 280)) {
-    @Previewable @State var notes: Set<Int> = [41, 60, 64, 67]
+    @Previewable @State var notes: Set<Int> = [41, 48, 52, 55]
     PianoKeyboardView(selectedNotes: $notes).padding(12)
 }
 
 #Preview("Black keys · Dark", traits: .fixedLayout(width: 780, height: 280)) {
-    @Previewable @State var notes: Set<Int> = [42, 46, 49, 54, 58, 61, 66, 70]
+    @Previewable @State var notes: Set<Int> = [42, 44, 46, 49, 51, 54, 56, 58]
     PianoKeyboardView(selectedNotes: $notes)
         .padding(12)
         .preferredColorScheme(.dark)
 }
 
 #Preview("Wide layout", traits: .fixedLayout(width: 1150, height: 400)) {
-    @Previewable @State var notes: Set<Int> = [41, 48, 60, 64, 67, 71]
+    @Previewable @State var notes: Set<Int> = [41, 47, 48, 52, 59]
     PianoKeyboardView(selectedNotes: $notes).padding(12)
 }
 
 #Preview("Read only", traits: .fixedLayout(width: 780, height: 280)) {
-    PianoKeyboardView(selectedNotes: .constant([42, 60, 71]), isInteractive: false).padding(12)
+    PianoKeyboardView(selectedNotes: .constant([42, 48, 59]), isInteractive: false).padding(12)
 }

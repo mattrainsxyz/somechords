@@ -24,13 +24,13 @@ struct PersistenceChecks {
         let song = Song(title: "  My First Song\n")
         context.insert(song)
         context.insert(Song(title: "Unrelated Song"))
-        let first = Chord(notes: [67, 60, 64, 60, 41, 42, 40, 72], position: 0, song: song)
-        let second = Chord(notes: [69, 62, 65], position: 1, song: song)
+        let first = Chord(notes: [59, 48, 52, 48, 41, 42, 40, 60], position: 0, song: song)
+        let second = Chord(notes: [57, 50, 53], position: 1, song: song)
         context.insert(first)
         context.insert(second)
         try context.save()
         precondition(song.title == "My First Song")
-        precondition(first.notes == [41, 42, 60, 64, 67])
+        precondition(first.notes == [41, 42, 48, 52, 59])
         precondition(song.chords.count == 2)
         return song.id
     }
@@ -43,7 +43,7 @@ struct PersistenceChecks {
         precondition(songs.count == 2)
         let song = songs.first { $0.id == id }!
         precondition(song.title == "My First Song")
-        precondition(song.orderedChords.map(\.notes) == [[41, 42, 60, 64, 67], [62, 65, 69]])
+        precondition(song.orderedChords.map(\.notes) == [[41, 42, 48, 52, 59], [50, 53, 57]])
         precondition(song.chords.allSatisfy { $0.song?.id == id })
         song.title = "Discarded edit"
         context.processPendingChanges()

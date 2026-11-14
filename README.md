@@ -1,6 +1,6 @@
 # Dekhenge — Phase 2
 
-A native SwiftUI notebook for piano players. The song library uses local SwiftData persistence. Phase 2 adds a reusable F2–B4 keyboard and temporary note selection. Saving, displaying, and editing song chords remain for Phase 3.
+A native SwiftUI notebook for piano players. The song library uses local SwiftData persistence. Phase 2 adds a reusable F2–B3 keyboard and temporary note selection. Saving, displaying, and editing song chords remain for Phase 3.
 
 ## Open and run
 
@@ -45,7 +45,7 @@ Tests/
 
 SwiftData is the single source of truth for saved songs. `@Query` observes the library, and `@State` holds temporary form text and presentation state. There is no separate view-model or service layer. New Swift source files in the app's synchronized folder are automatically included in its target.
 
-`Song` stores a unique UUID, title, creation date, modification date, and chords. `Chord` stores a unique UUID, optional label, normalized `[Int]` MIDI notes, integer position, and parent song. The relationship has an explicit inverse and cascade deletion. Chords are sorted by position when read; SwiftData relationship array order is not treated as persistent ordering. Notes are deduplicated, sorted, and limited to MIDI 41–71. The chord model is established now without adding chord UI before its scheduled phase.
+`Song` stores a unique UUID, title, creation date, modification date, and chords. `Chord` stores a unique UUID, optional label, normalized `[Int]` MIDI notes, integer position, and parent song. The relationship has an explicit inverse and cascade deletion. Chords are sorted by position when read; SwiftData relationship array order is not treated as persistent ordering. Notes are deduplicated, sorted, and limited to MIDI 41–59. The chord model is established now without adding chord UI before its scheduled phase.
 
 Each mutation explicitly saves. Failed saves roll back and show an error; failed renames also restore observed title/date values because the installed SwiftData runtime leaves these values stale after rollback. Cancel never edits a persisted model. Blank or whitespace-only titles cannot be saved. Duplicate song titles are allowed because songs have separate IDs.
 
@@ -53,11 +53,11 @@ The store is on disk in the application's sandbox, with CloudKit explicitly disa
 
 ## Try the Phase 2 keyboard
 
-Create or open a song, then choose **Try the Keyboard**. The entire keyboard screen remains rotated 90 degrees clockwise within the portrait interface. Notes run from F2 at the top to B4 at the bottom. The screen contains the keyboard and a navigation bar with **Clear** and **Done**. There are no introductory or selected-note sections, and no horizontal or vertical scroll views.
+Create or open a song, then choose **Try the Keyboard**. The entire keyboard screen remains rotated 90 degrees clockwise within the portrait interface. Notes run from F2 at the top to B3 at the bottom. The screen contains the keyboard and a navigation bar with **Clear** and **Done**. There are no introductory or selected-note sections, and no horizontal or vertical scroll views.
 
 Tap keys to toggle any combination of notes. **Clear** removes the selection; **Done** closes the screen. Selections are temporary and start empty when the screen is reopened. Saving song chords remains Phase 3 work.
 
-The fixed range is F2–B4, MIDI 41–71: 18 white keys and 13 black keys. White keys display their letter only. Black keys display both enharmonic names on separate lines, such as F♯ and G♭. Octaves are retained in MIDI values and VoiceOver descriptions, allowing repeated notes to remain distinguishable without printed octave numbers.
+The fixed range is F2–B3, MIDI 41–59: 11 white keys and 8 black keys. White keys display their letter only. Black keys display both enharmonic names on separate lines, such as F♯ and G♭. Octaves are retained in MIDI values and VoiceOver descriptions, allowing repeated notes to remain distinguishable without printed octave numbers.
 
 `PianoNote` supplies the range shared by saved chord normalization and keyboard rendering. `PianoKeyboardLayout` calculates white/black frames independently of UI state. Black buttons have a higher stacking order and rectangular hit regions matching their visible frames. Every key scales to the available width and height; there is no minimum width that would force scrolling. On small phones this means narrower touch targets than the previous scrolling keyboard. Selected keys use deep indigo with a checkmark. Key labels scale to fit, while native navigation controls support Dynamic Type.
 
@@ -73,7 +73,7 @@ The fixed range is F2–B4, MIDI 41–71: 18 white keys and 13 black keys. White
 
 For isolated styling, open `Dekhenge/Components/PianoKeyboardView.swift`. **Interactive keyboard** and **Black keys · Dark** start with sample selections; **Wide layout** checks the component at 1150 points of width; **Read only** checks display mode. These component previews use fixed layout sizes, not device emulation. Previews use temporary selection state and do not change your notebook. The standalone screen preview's Done button has no presenting sheet to dismiss; verify dismissal in the actual app.
 
-The updated F2–B4 keyboard rendered in the live iPhone preview without either removed section or scrolling. Coordinate taps verified black-key selection without selecting adjacent white keys, multiple selections, independent deselection, and Clear. Xcode's preview accessibility tree exposed note names including octaves and both sharp/flat names; full VoiceOver navigation has not been verified. The preview automatically reflected the source changes.
+Before the range correction, the keyboard rendered in the live iPhone preview without either removed section or scrolling. Coordinate taps verified black-key selection without selecting adjacent white keys, multiple selections, independent deselection, and Clear. Xcode's preview accessibility tree exposed note names including octaves and both sharp/flat names; full VoiceOver navigation has not been verified. The preview automatically reflected the source changes.
 
 ## Verification
 
@@ -84,9 +84,9 @@ bash Tests/run-persistence-checks.sh
 bash Tests/run-keyboard-checks.sh
 ```
 
-The persistence checks use the real models and container configuration with an isolated temporary database. They verify creation, reopening, title trimming, saved renames/timestamps, persisted rollback state, normalization, positions, inverse relationships, cascade deletion, and preservation of unrelated songs. The expanded test chord includes MIDI 41 and 42 to confirm the new low notes survive persistence.
+The persistence checks use the real models and container configuration with an isolated temporary database. They verify creation, reopening, title trimming, saved renames/timestamps, persisted rollback state, normalization, positions, inverse relationships, cascade deletion, and preservation of unrelated songs. The expanded test chord includes MIDI 41 and 42 to confirm the range endpoints and low notes survive persistence.
 
-The keyboard checks verify all 31 MIDI values, note names, the 18 white and 13 black keys, both sharp/flat spellings, labels without octave numbers, accessible octave information, black-key boundaries, E/F and B/C gaps, and fitting every key into phone/tablet bounds over multiple widths and heights. These are standalone checks rather than Xcode UI test targets, and remove only their own temporary files.
+The keyboard checks verify all 19 MIDI values, note names, the 11 white and 8 black keys, both sharp/flat spellings, labels without octave numbers, accessible octave information, black-key boundaries, E/F and B/C gaps, and fitting every key into phone/tablet bounds over multiple widths and heights. These are standalone checks rather than Xcode UI test targets, and remove only their own temporary files.
 
 Verified:
 
@@ -99,7 +99,7 @@ Remaining hands-on checks:
 
 1. Create **My First Song**, open it, rename it, and confirm canceling a title draft does not change saved data.
 2. Create a second song, force quit, and relaunch. Delete one song with confirmation and verify the other remains.
-3. In the keyboard, select F2 and F3 together and toggle only one off. Check the first F2 and last B4 remain fully visible, along with all black-key spellings.
+3. In the keyboard, select F2 and F3 together and toggle only one off. Check the first F2 and last B3 remain fully visible, along with all black-key spellings.
 4. Check iPad, the smallest supported iPhone, dark appearance, larger text, and VoiceOver. Verify key edges select only the intended note.
 5. Rotate a device while the library and keyboard are open. Verify the portrait interface stays fixed and the keyboard keeps its clockwise orientation. Orientation capability changes require rebuilding/relaunching the app; a canvas refresh alone does not validate them.
 6. Verify Done closes the keyboard and reopening clears temporary selections.
