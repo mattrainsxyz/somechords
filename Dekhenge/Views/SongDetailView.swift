@@ -100,6 +100,7 @@ struct SongDetailView: View {
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .ignore)
+        .accessibilityAddTraits(.isButton)
         .accessibilityLabel("\(chord.label ?? "Chord \(index + 1)"), \(index + 1) of \(song.chords.count)")
         .accessibilityHint(Text(chordAccessibilityHint))
         .accessibilityValue(PianoNote.names(for: Set(chord.notes)))

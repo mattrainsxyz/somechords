@@ -1,6 +1,6 @@
-# Dekhenge — Phase 4
+# Dekhenge — Phase 5
 
-A native SwiftUI notebook for piano players. The song library uses local SwiftData persistence. Phase 3 adds saved chord sequences, optional labels, compact diagrams, editing, and deletion. The F2–B3 keyboard stays sideways, fitted to the screen, with no scrolling. Phase 4 adds saved reordering and compact chord positions after deletion.
+A native SwiftUI notebook for piano players. The song library uses local SwiftData persistence. Phase 3 adds saved chord sequences, optional labels, compact diagrams, editing, and deletion. The F2–B3 keyboard stays sideways, fitted to the screen, with no scrolling. Phase 4 adds saved reordering and compact chord positions after deletion. Phase 5 adds failed-write regression checks, separate-process persistence checks, accessibility polish, and an iPad portrait compatibility setting.
 
 ## Open and run
 
@@ -9,7 +9,7 @@ A native SwiftUI notebook for piano players. The song library uses local SwiftDa
 3. Choose **Product > Run** (Command-R). The app appears as **Dekhenge**.
 4. For a physical device, select the app target's **Signing & Capabilities**, choose your development team, and replace the placeholder bundle identifier with your own unique identifier.
 
-The project targets iOS/iPadOS 26.0 and later, with both device families enabled. iPhone and iPad declare portrait-only support; landscape orientations are disabled. The starter uses Xcode's `project.xcproj` format; development was verified with Xcode 27.2. There are no packages, network services, iCloud capabilities, or accounts to configure.
+The project targets iOS/iPadOS 26.0 and later, with both device families enabled. iPhone and iPad declare portrait-only support. The app also enables `UIRequiresFullScreen` to keep the iPad scene in a fixed portrait layout. This was verified by rotating the full iPad mini simulator in both the library and the chord editor. Apple has deprecated this compatibility setting and says it will be ignored in a future release; iPad window resizing scales the scene instead of reflowing its layout. The newer scene orientation preference did not enforce the required lock in the tested simulator. See [Apple’s compatibility-mode documentation](https://developer.apple.com/documentation/bundleresources/information-property-list/uirequiresfullscreen). The starter uses Xcode's `project.xcproj` format; development was verified with Xcode 27.2. There are no packages, network services, iCloud capabilities, or accounts to configure.
 
 ## Repository layout
 
@@ -77,7 +77,7 @@ The fixed range is F2–B3, MIDI 41–59: 11 white keys and 8 black keys. White 
 
 With at least two chords, tap **Reorder** on the song page. Drag the native handle beside a card to its new position, then tap **Done** to leave reordering mode. Each completed move saves immediately; Done exits the mode rather than committing a separate draft. Tapping a card while reordering does not open the editor.
 
-For a single-step move, touch and hold a card and choose **Move Earlier** or **Move Later**. The first card cannot move earlier and the last cannot move later. VoiceOver custom actions offer the available moves without requiring a drag; each card announces its position within the song. Full VoiceOver interaction still needs manual verification.
+For a single-step move, touch and hold a card and choose **Move Earlier** or **Move Later**. The first card cannot move earlier and the last cannot move later. VoiceOver custom actions offer the available moves without requiring a drag; each card announces its position within the song. The Move Earlier accessibility action was invoked successfully in the full phone simulator and the changed order survived termination/relaunch. Full VoiceOver speech and focus traversal still need manual verification.
 
 There is no Reorder control for an empty or single-chord song. If deletion leaves fewer than two chords, reorder mode ends automatically. Empty songs show an Add Chord action, long songs scroll normally, and the existing back button returns to the library. New chords append after the current last chord even after moves or deletions. The editor remains a fitted, non-scrolling keyboard; only the song's diagram list scrolls.
 
@@ -106,8 +106,10 @@ The keyboard checks verify all 19 MIDI values, note names, the 11 white and 8 bl
 
 Verified:
 
-- Simulator build for arm64 and x86_64, with iOS 26.0 as the minimum deployment target.
-- Both automated suites above.
+- Debug and Release simulator builds for arm64 and x86_64, with iOS 26.0 as the minimum deployment target.
+- Both automated suites above, including rejected-write recovery and reopening in a separate process.
+- Full phone app: independent octave selection, black-key isolation, canceling a cleared draft, accessibility Move Earlier, and notes/order restored after terminating and relaunching.
+- Full iPad mini app: all keys fit, F2/F♯2/B3 save into the matching diagram, and portrait content stays fixed during device rotation in both library and editor.
 - Portrait-only orientation lists in the built app for both device families.
 - Live iPhone preview rendering of compact diagrams and the sideways editor.
 - Preview interaction: reopening saved selections, saving an edited diagram, creating a labeled chord at the end, disabled Save for an empty selection, clearing a draft and canceling without changing the saved chord.
@@ -118,13 +120,13 @@ Verified:
 
 Remaining hands-on checks:
 
-1. Create **My First Song**, open it, rename it, and confirm canceling a title draft does not change saved data.
+1. Create **My First Song**, rename it, and confirm canceling a title draft does not change saved data. Creating and opening a separate Phase 5 test song passed in the full phone app.
 2. Create a second song, force quit, and relaunch. Delete one song with confirmation and verify the other remains.
-3. In the keyboard, select F2 and F3 together and toggle only one off. Check the first F2 and last B3 remain fully visible, along with all black-key spellings.
-4. Check iPad, the smallest supported iPhone, dark appearance, larger text, and VoiceOver. Verify key edges select only the intended note.
-5. Rotate a device while the library and keyboard are open. Verify the portrait interface stays fixed and the keyboard keeps its clockwise orientation. Orientation capability changes require rebuilding/relaunching the app; a canvas refresh alone does not validate them.
-6. In the full app, add three chords, edit the first, cancel another edit, move the last chord to the front using Reorder, move one step using the context menu, and relaunch to verify saved notes/labels/order. Delete a middle chord and append another; confirm relative order and numbering stay correct. Check delete-cancel and empty-song states. Preview interactions do not substitute for this full app relaunch check.
-7. Check long-song scrolling, drag auto-scrolling near list edges, VoiceOver move actions, and ending reorder mode when deletion leaves one chord.
+3. Check key-edge touches on a physical device. Full phone simulator interaction passed F2/F3 independent selection, toggling F2 without clearing F3, and black-key selection without toggling the underlying white key. The saved diagram retained F♯2 and F3 after canceling a cleared draft and terminating/relaunching. All F2–B3 keys and black-key spellings fit on the phone and iPad mini screens.
+4. Check the smallest supported iPhone, dark appearance, larger text, and VoiceOver speech/focus traversal. Basic iPad mini layout and selection checks passed. Verify key edges select only the intended note.
+5. Repeat rotation checks on physical iPhone and iPad hardware. Full simulator checks passed on iPhone and, with the compatibility setting, on iPad mini: the library remains portrait and the editor retains its clockwise rotation. The iPad keyboard saved F2, F♯2, and B3 into the matching diagram.
+6. In the full app, check native handle moves, deletion-cancel, middle deletion, and appending. A full phone simulator check created two chords, invoked the accessibility Move Earlier action, terminated/relaunched, and restored their exact order and notes.
+7. Check long-song scrolling, drag auto-scrolling near list edges, spoken VoiceOver interaction, and ending reorder mode when deletion leaves one chord. The accessibility Move Earlier action itself passed in the full simulator.
 8. Test on an iOS 26 device or simulator. The installed simulator runtime used during development is iOS 27.2.
 
-Storage-failure alerts compile but have not been verified with injected failures. Device signing, app icon artwork, App Store setup, and deployment remain future work.
+Failed chord writes are now tested using a read-only database: edit, creation, reorder, and deletion must restore observed and stored membership, notes, labels, positions, and timestamps. These checks caught and fixed a rejected insertion remaining visible in its parent relationship. The persistence script also saves and restores a notebook in separate executable processes, checking identities, notes, labels, positions, and relationships. Expected read-only-store error messages appear during these checks; the script must finish with all PASS lines. The on-screen storage-failure alerts still need hands-on verification. Device signing, app icon artwork, App Store setup, and deployment remain future work.

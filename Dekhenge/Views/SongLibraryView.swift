@@ -8,6 +8,7 @@ struct SongLibraryView: View {
     @State private var isCreatingSong = false
     @State private var songToRename: Song?
     @State private var songToDelete: Song?
+    @State private var isConfirmingDeletion = false
     @State private var deletionError: String?
 
     var body: some View {
@@ -29,7 +30,7 @@ struct SongLibraryView: View {
                                     Text(song.title)
                                         .font(.headline)
                                         .foregroundStyle(.primary)
-                                    Text("\(song.chords.count) chords")
+                                    Text(song.chords.count == 1 ? "1 chord" : "\(song.chords.count) chords")
                                         .font(.subheadline)
                                         .foregroundStyle(.secondary)
                                 }
@@ -37,12 +38,12 @@ struct SongLibraryView: View {
                             }
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            Button("Delete", role: .destructive) { songToDelete = song }
+                            Button("Delete", role: .destructive) { requestDeletion(of: song) }
                             Button("Rename") { songToRename = song }.tint(.indigo)
                         }
                         .contextMenu {
                             Button("Rename", systemImage: "pencil") { songToRename = song }
-                            Button("Delete Song", systemImage: "trash", role: .destructive) { songToDelete = song }
+                            Button("Delete Song", systemImage: "trash", role: .destructive) { requestDeletion(of: song) }
                         }
                     }
                 } header: {
@@ -92,14 +93,11 @@ struct SongLibraryView: View {
                     }
                 }
             }
-            .alert("Delete Song?", isPresented: Binding(
-                get: { songToDelete != nil },
-                set: { if !$0 { songToDelete = nil } }
-            )) {
+            .alert("Delete Song?", isPresented: $isConfirmingDeletion, presenting: songToDelete) { song in
                 Button("Cancel", role: .cancel) { songToDelete = nil }
-                Button("Delete", role: .destructive) { deleteSong() }
-            } message: {
-                Text("“\(songToDelete?.title ?? "This song")” and all its chords will be permanently deleted.")
+                Button("Delete", role: .destructive) { deleteSong(song) }
+            } message: { song in
+                Text("“\(song.title)” and all its chords will be permanently deleted.")
             }
             .alert("Couldn’t Delete Song", isPresented: Binding(
                 get: { deletionError != nil },
@@ -122,8 +120,12 @@ struct SongLibraryView: View {
         }
     }
 
-    private func deleteSong() {
-        guard let song = songToDelete else { return }
+    private func requestDeletion(of song: Song) {
+        songToDelete = song
+        isConfirmingDeletion = true
+    }
+
+    private func deleteSong(_ song: Song) {
         songToDelete = nil
         modelContext.delete(song)
         do { try saveChanges() }

@@ -5,6 +5,38 @@ import SwiftData
 struct PersistenceChecks {
     @MainActor
     static func main() throws {
+        if CommandLine.arguments.count == 3 {
+            let url = URL(fileURLWithPath: CommandLine.arguments[2])
+            if CommandLine.arguments[1] == "seed-process" {
+                let id = try createAndSave(at: url)
+                try verifyReopenAndRename(at: url, id: id)
+                let editingURL = url.appendingPathExtension("editing")
+                do {
+                    let fixture = try NotebookStore.makeContainer(at: editingURL)
+                    fixture.mainContext.insert(Song(title: "Unrelated Song"))
+                    try fixture.mainContext.save()
+                }
+                let editingSongID = try createChordSequence(at: editingURL)
+                try verifyChordEditingAndDeletion(at: editingURL, id: editingSongID)
+                let snapshot = try verifyReordering(at: url)
+                let record = ProcessSnapshot(processID: ProcessInfo.processInfo.processIdentifier,
+                                             songID: snapshot.0, chordIDs: snapshot.1,
+                                             editingSongID: editingSongID)
+                try JSONEncoder().encode(record).write(to: url.appendingPathExtension("json"))
+                print("PASS: first process saved songs, edited notes, and reordered sequence.")
+                return
+            }
+            if CommandLine.arguments[1] == "verify-process" {
+                let data = try Data(contentsOf: url.appendingPathExtension("json"))
+                let record = try JSONDecoder().decode(ProcessSnapshot.self, from: data)
+                precondition(record.processID != ProcessInfo.processInfo.processIdentifier)
+                try verifyReorderingReopened(at: url, songID: record.songID, ids: record.chordIDs)
+                try verifyEditedSequenceReopened(at: url.appendingPathExtension("editing"), id: record.editingSongID)
+                print("PASS: separate process restored exact song/chord identities, notes, labels, positions, and relationships.")
+                return
+            }
+            preconditionFailure("Unknown check mode")
+        }
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("DekhengeTests-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -19,7 +51,8 @@ struct PersistenceChecks {
         try verifyEditedSequenceReopened(at: url, id: editingSongID)
         let reordered = try verifyReordering(at: url)
         try verifyReorderingReopened(at: url, songID: reordered.0, ids: reordered.1)
-        print("PASS: create, disk reopen, title trimming, rename, rollback, normalized MIDI notes, positions, cascade deletion, unrelated data preservation, draft cancellation, empty selection rejection, chord create/edit/delete, labels, append positions, cross-song isolation, complete-sequence reordering, invalid order rejection, deletion compaction, long sequence reopen.")
+        try verifyRejectedWrites(at: url, songID: reordered.0)
+        print("PASS: create, disk reopen, title trimming, rename, rollback, normalized MIDI notes, positions, cascade deletion, unrelated data preservation, draft cancellation, empty selection rejection, chord create/edit/delete, labels, append positions, cross-song isolation, complete-sequence reordering, invalid order rejection, deletion compaction, long sequence reopen, failed-write recovery.")
     }
 
     @MainActor
@@ -248,6 +281,57 @@ struct PersistenceChecks {
         precondition(onlyChord.position == 0)
         try empty.deleteChord(onlyChord, in: context)
         precondition(empty.chords.isEmpty)
+    }
+
+
+    struct ProcessSnapshot: Codable {
+        let processID: Int32
+        let songID: UUID
+        let chordIDs: [UUID]
+        let editingSongID: UUID
+    }
+
+    @MainActor
+    static func verifyRejectedWrites(at url: URL, songID: UUID) throws {
+        let schema = Schema([Song.self, Chord.self])
+        let config = ModelConfiguration(schema: schema, url: url, allowsSave: false, cloudKitDatabase: .none)
+        let container = try ModelContainer(for: schema, configurations: [config])
+        let context = container.mainContext
+        context.autosaveEnabled = false
+        let song = try context.fetch(FetchDescriptor<Song>()).first { $0.id == songID }!
+        let original = song.orderedChords
+        let ids = original.map(\.id)
+        let notes = original.map(\.notes)
+        let labels = original.map(\.label)
+        let positions = original.map(\.position)
+        let date = song.updatedAt
+        let allChordIDs = Set(try context.fetch(FetchDescriptor<Chord>()).map(\.id))
+        let operations: [() throws -> Void] = [
+            { try song.saveChord(ChordDraft(label: "Rejected edit", notes: [42]), editing: original[0], in: context) },
+            { try song.saveChord(ChordDraft(label: "Rejected creation", notes: [41]), editing: nil, in: context) },
+            { try song.reorderChords(Array(ids.reversed()), in: context) },
+            { try song.deleteChord(original[0], in: context) }
+        ]
+        for (index, operation) in operations.enumerated() {
+            var failed = false
+            do { try operation() } catch { failed = true }
+            precondition(failed, "A read-only store must reject a save")
+            precondition(song.orderedChords.map(\.id) == ids, "Failed operation \(index) changed chord membership or order")
+            precondition(song.orderedChords.map(\.notes) == notes)
+            precondition(song.orderedChords.map(\.label) == labels)
+            precondition(song.orderedChords.map(\.position) == positions)
+            precondition(song.updatedAt == date)
+            let check = ModelContext(container)
+            let persisted = try check.fetch(FetchDescriptor<Song>()).first { $0.id == songID }!
+            precondition(persisted.orderedChords.map(\.id) == ids)
+            precondition(persisted.orderedChords.map(\.notes) == notes)
+            precondition(persisted.orderedChords.map(\.label) == labels)
+            precondition(persisted.orderedChords.map(\.position) == positions)
+            precondition(persisted.updatedAt == date)
+            let persistedChordIDs = Set(try check.fetch(FetchDescriptor<Chord>()).map(\.id))
+            precondition(persistedChordIDs == allChordIDs,
+                         "A failed write added or removed a chord record")
+        }
     }
 
 }

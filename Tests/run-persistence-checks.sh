@@ -13,3 +13,5 @@ xcrun swiftc -parse-as-library -module-cache-path "$check_dir/modules" \
   "$project_dir/Tests/PersistenceChecks.swift" \
   -o "$check_dir/persistence-checks"
 "$check_dir/persistence-checks"
+"$check_dir/persistence-checks" seed-process "$check_dir/relaunch.store"
+"$check_dir/persistence-checks" verify-process "$check_dir/relaunch.store"

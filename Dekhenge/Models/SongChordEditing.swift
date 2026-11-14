@@ -23,6 +23,7 @@ extension Song {
             guard chord.song?.id == id, !chord.isDeleted else { throw ChordEditingError.wrongSong }
         }
         let previousDate = updatedAt
+        let previousChords = chords
         let previousLabel = chord?.label
         let previousNotes = chord?.notes ?? []
         if let chord {
@@ -38,6 +39,8 @@ extension Song {
         do {
             try context.save()
         } catch {
+            // Detach a rejected insertion before rollback invalidates its backing data.
+            if chord == nil { chords = previousChords }
             context.processPendingChanges()
             context.rollback()
             // Restore observed values as well as the stored transaction on affected runtimes.
