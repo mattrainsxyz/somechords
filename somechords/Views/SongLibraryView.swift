@@ -64,7 +64,7 @@ struct SongLibraryView: View {
                     }
                 }
             }
-            .navigationTitle("Dekhenge")
+            .navigationTitle("somechords")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button("New Song", systemImage: "plus") { isCreatingSong = true }

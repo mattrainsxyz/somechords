@@ -38,7 +38,7 @@ struct PersistenceChecks {
             preconditionFailure("Unknown check mode")
         }
         let directory = FileManager.default.temporaryDirectory
-            .appendingPathComponent("DekhengeTests-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("somechordsTests-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: directory) }
         let url = directory.appendingPathComponent("notebook.store")

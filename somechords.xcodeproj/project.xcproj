@@ -11,20 +11,20 @@
     ],
   },
   "files": [
-    { "kind": "folder", "path": "Dekhenge", "target-membership": [ "Dekhenge" ] },
+    { "kind": "folder", "path": "somechords", "target-membership": [ "somechords" ] },
     {
       "kind": "group",
       "name": "Products",
       "children": [
-        { "path": "<PRODUCTS>/Dekhenge.app", "id": "000000000000000000000120", "type": "wrapper.application", "index": false },
+        { "path": "<PRODUCTS>/somechords.app", "id": "000000000000000000000120", "type": "wrapper.application", "index": false },
       ],
     },
   ],
   "targets": [
     {
-      "name": "Dekhenge",
+      "name": "somechords",
       "id": "000000000000000100000000",
-      "product": "Products/Dekhenge.app",
+      "product": "Products/somechords.app",
       "product-type": "application",
       "build-phases": [
         "compile-sources",
@@ -38,7 +38,7 @@
         "ENABLE_PREVIEWS": "YES",
         "ENABLE_USER_SELECTED_FILES": "readonly",
         "GENERATE_INFOPLIST_FILE": "YES",
-        "INFOPLIST_KEY_CFBundleDisplayName": "Dekhenge",
+        "INFOPLIST_KEY_CFBundleDisplayName": "somechords",
         "INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]": "YES",
         "INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]": "YES",
         "INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]": "YES",
@@ -52,8 +52,8 @@
         "INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone": "UIInterfaceOrientationPortrait",
         "LD_RUNPATH_SEARCH_PATHS": "@executable_path/Frameworks",
         "LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]": "@executable_path/../Frameworks",
-        "MARKETING_VERSION": "0.5.0",
-        "PRODUCT_BUNDLE_IDENTIFIER": "devplaceholder.$(PROJECT_UNIQUE_VALUE:identifier).$(PRODUCT_NAME:rfc1034identifier)",
+        "MARKETING_VERSION": "0.5.1",
+        "PRODUCT_BUNDLE_IDENTIFIER": "devplaceholder.r2xc0q0n.somechords",
         "PRODUCT_NAME": "$(TARGET_NAME)",
         "REGISTER_APP_GROUPS": "YES",
         "SDKROOT": "auto",
