@@ -75,7 +75,7 @@ private struct PianoKeyFace: View {
 
     private var foreground: Color { selected || note.isBlack ? .white : .black }
     private var fill: Color {
-        if selected { return Color(red: 0.29, green: 0.22, blue: 0.75) }
+        if selected { return Color.blue }
         return note.isBlack ? Color(white: 0.12) : Color(white: 0.98)
     }
 

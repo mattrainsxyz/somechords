@@ -83,17 +83,17 @@ struct ChordEditorView: View {
 }
 
 #Preview("New chord", traits: .portrait) {
-    ChordEditorView { _ in }.tint(.indigo)
+    ChordEditorView { _ in }.tint(.blue)
 }
 
 #Preview("Edit chord · Dark", traits: .portrait) {
     ChordEditorView(chord: Chord(label: "Opening", notes: [41, 48, 52, 55], position: 0)) { _ in }
-        .tint(.indigo)
+        .tint(.blue)
         .preferredColorScheme(.dark)
 }
 
 #Preview("Larger text", traits: .portrait) {
     ChordEditorView { _ in }
-        .tint(.indigo)
+        .tint(.blue)
         .environment(\.dynamicTypeSize, .accessibility1)
 }

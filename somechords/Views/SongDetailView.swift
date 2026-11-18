@@ -68,7 +68,7 @@ struct SongDetailView: View {
             ChordEditorView(chord: request.chord) { draft in
                 try song.saveChord(draft, editing: request.chord, in: modelContext)
             }
-            .tint(.indigo)
+            .tint(.blue)
         }
         .alert("Delete Chord?", isPresented: $isConfirmingDeletion, presenting: chordToDelete) { chord in
             Button("Delete Chord", role: .destructive) { deleteChord(chord) }
@@ -188,19 +188,19 @@ private func makeSongPreview(chordCount: Int) throws -> (ModelContainer, Song) {
     let (container, song) = try! makeSongPreview(chordCount: 3)
     NavigationStack { SongDetailView(song: song) }
         .modelContainer(container)
-        .tint(.indigo)
+        .tint(.blue)
 }
 
 #Preview("Empty song") {
     let (container, song) = try! makeSongPreview(chordCount: 0)
     NavigationStack { SongDetailView(song: song) }
         .modelContainer(container)
-        .tint(.indigo)
+        .tint(.blue)
 }
 #Preview("Long song") {
     let (container, song) = try! makeSongPreview(chordCount: 32)
     NavigationStack { SongDetailView(song: song) }
         .modelContainer(container)
-        .tint(.indigo)
+        .tint(.blue)
 }
 #endif

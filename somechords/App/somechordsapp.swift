@@ -25,7 +25,7 @@ struct somechordsapp: App {
                         .accessibilityLabel("Loading")
                 }
             }
-            .tint(.indigo)
+            .tint(.blue)
             .task { if container == nil { openNotebook() } }
         }
     }

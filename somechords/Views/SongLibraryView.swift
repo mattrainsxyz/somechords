@@ -22,9 +22,9 @@ struct SongLibraryView: View {
                             HStack(spacing: 16) {
                                 Image(systemName: "music.note.list")
                                     .font(.title2)
-                                    .foregroundStyle(.indigo)
+                                    .foregroundStyle(.blue)
                                     .frame(width: 44, height: 48)
-                                    .background(.indigo.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
+                                    .background(.blue.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
                                     .accessibilityHidden(true)
                                 VStack(alignment: .leading, spacing: 5) {
                                     Text(song.title)
@@ -39,7 +39,7 @@ struct SongLibraryView: View {
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button("Delete", role: .destructive) { requestDeletion(of: song) }
-                            Button("Rename") { songToRename = song }.tint(.indigo)
+                            Button("Rename") { songToRename = song }.tint(.blue)
                         }
                         .contextMenu {
                             Button("Rename", systemImage: "pencil") { songToRename = song }
@@ -52,20 +52,7 @@ struct SongLibraryView: View {
                     if !songs.isEmpty { Text("A little space for the music you want to remember.") }
                 }
             }
-            .overlay {
-                if songs.isEmpty {
-                    VStack(spacing: 24) {
-                        Image(systemName: "music.note.list")
-                            .font(.system(size: 48))
-                            .foregroundStyle(.secondary)
-                            .accessibilityHidden(true)
-                        Button("add song") { isCreatingSong = true }
-                            .buttonStyle(.borderedProminent)
-                    }
-                }
-            }
             .navigationTitle("somechords")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button("New Song", systemImage: "plus") { isCreatingSong = true }
@@ -107,6 +94,17 @@ struct SongLibraryView: View {
                 Button("OK", role: .cancel) { deletionError = nil }
             } message: {
                 Text(deletionError ?? "Please try again.")
+            }
+        }
+        .overlay(alignment: .center) {
+            if songs.isEmpty {
+                VStack(spacing: 24) {
+                    Image(systemName: "music.note.list")
+                        .font(.system(size: 48))
+                        .foregroundStyle(.secondary)
+                        .accessibilityHidden(true)
+                    Button("new song") { isCreatingSong = true }
+                }
             }
         }
     }
