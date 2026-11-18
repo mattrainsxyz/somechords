@@ -27,6 +27,7 @@ struct ChordEditorView: View {
         NavigationStack {
             PianoKeyboardView(selectedNotes: $draft.notes)
                 .padding(12)
+                .background(Color(uiColor: .systemGroupedBackground))
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItemGroup(placement: .topBarLeading) {

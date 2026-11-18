@@ -23,7 +23,7 @@ struct ChordDiagramView: View {
                 .accessibilityHidden(true)
         }
         .padding(16)
-        .background(.background, in: RoundedRectangle(cornerRadius: 16))
+        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
         .overlay {
             RoundedRectangle(cornerRadius: 16).strokeBorder(.quaternary, lineWidth: 1)
         }

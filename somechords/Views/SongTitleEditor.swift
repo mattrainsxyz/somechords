@@ -31,6 +31,8 @@ struct SongTitleEditor: View {
                         .accessibilityIdentifier("songTitleField")
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle(heading)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

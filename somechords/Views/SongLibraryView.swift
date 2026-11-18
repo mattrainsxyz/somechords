@@ -48,6 +48,15 @@ struct SongLibraryView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(Color(uiColor: .systemGroupedBackground))
+            .overlay {
+                if songs.isEmpty {
+                    EmptyStateActionView(systemImage: "music.note.list", title: "New Song") {
+                        isCreatingSong = true
+                    }
+                }
+            }
             .navigationTitle("somechords")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
@@ -81,7 +90,7 @@ struct SongLibraryView: View {
                 Button("Cancel", role: .cancel) { songToDelete = nil }
                 Button("Delete", role: .destructive) { deleteSong(song) }
             } message: { song in
-                Text("“\(song.title)” and all its chords will be permanently deleted.")
+                Text("“\(song.title)” and all its chords will be deleted.")
             }
             .alert("Couldn’t Delete Song", isPresented: Binding(
                 get: { deletionError != nil },
@@ -90,17 +99,6 @@ struct SongLibraryView: View {
                 Button("OK", role: .cancel) { deletionError = nil }
             } message: {
                 Text(deletionError ?? "Please try again.")
-            }
-        }
-        .overlay(alignment: .center) {
-            if songs.isEmpty {
-                VStack(spacing: 24) {
-                    Image(systemName: "music.note.list")
-                        .font(.system(size: 48))
-                        .foregroundStyle(.secondary)
-                        .accessibilityHidden(true)
-                    Button("new song") { isCreatingSong = true }
-                }
             }
         }
     }

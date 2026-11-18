@@ -25,6 +25,8 @@ struct somechordsapp: App {
                         .accessibilityLabel("Loading")
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(uiColor: .systemGroupedBackground))
             .tint(.blue)
             .task { if container == nil { openNotebook() } }
         }

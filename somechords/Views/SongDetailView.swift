@@ -34,15 +34,8 @@ struct SongDetailView: View {
         .background(Color(uiColor: .systemGroupedBackground))
         .overlay {
             if song.chords.isEmpty {
-                ContentUnavailableView {
-                    Label("A Fresh Page", systemImage: "pianokeys")
-                } description: {
-                    Text("Add your first chord to start this song.")
-                } actions: {
-                    Button("Add Chord", systemImage: "plus") {
-                        editorRequest = EditorRequest(chord: nil)
-                    }
-                    .buttonStyle(.borderedProminent)
+                EmptyStateActionView(systemImage: "pianokeys", title: "New Chord") {
+                    editorRequest = EditorRequest(chord: nil)
                 }
             }
         }
@@ -58,7 +51,7 @@ struct SongDetailView: View {
                 }
             }
             ToolbarItem(placement: .primaryAction) {
-                Button("Add Chord", systemImage: "plus") {
+                Button("New Chord", systemImage: "plus") {
                     editorRequest = EditorRequest(chord: nil)
                 }
                 .accessibilityIdentifier("addChordButton")
