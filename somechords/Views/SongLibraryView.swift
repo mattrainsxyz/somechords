@@ -54,17 +54,18 @@ struct SongLibraryView: View {
             }
             .overlay {
                 if songs.isEmpty {
-                    ContentUnavailableView {
-                        Label("Your Notebook Awaits", systemImage: "music.note.list")
-                    } description: {
-                        Text("Keep your songs and their chords in one quiet place. Start with a song title.")
-                    } actions: {
-                        Button("Create Your First Song") { isCreatingSong = true }
+                    VStack(spacing: 24) {
+                        Image(systemName: "music.note.list")
+                            .font(.system(size: 48))
+                            .foregroundStyle(.secondary)
+                            .accessibilityHidden(true)
+                        Button("add song") { isCreatingSong = true }
                             .buttonStyle(.borderedProminent)
                     }
                 }
             }
             .navigationTitle("somechords")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button("New Song", systemImage: "plus") { isCreatingSong = true }
