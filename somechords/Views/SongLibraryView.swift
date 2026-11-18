@@ -46,10 +46,6 @@ struct SongLibraryView: View {
                             Button("Delete Song", systemImage: "trash", role: .destructive) { requestDeletion(of: song) }
                         }
                     }
-                } header: {
-                    if !songs.isEmpty { Text("Your songs") }
-                } footer: {
-                    if !songs.isEmpty { Text("A little space for the music you want to remember.") }
                 }
             }
             .navigationTitle("somechords")
