@@ -38,13 +38,11 @@ struct ChordEditorView: View {
                             .accessibilityIdentifier("clearNotesButton")
                     }
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button {
+                        Button("Name") {
                             labelInput = draft.label
                             isEditingLabel = true
-                        } label: {
-                            Label("Chord Label", systemImage: draft.normalizedLabel == nil ? "tag" : "tag.fill")
                         }
-                        .accessibilityValue(draft.normalizedLabel ?? "No label")
+                        .accessibilityValue(draft.normalizedLabel ?? "No name")
                         .accessibilityIdentifier("chordLabelButton")
                     }
                     ToolbarItem(placement: .confirmationAction) {
@@ -53,13 +51,11 @@ struct ChordEditorView: View {
                             .accessibilityIdentifier("saveChordButton")
                     }
                 }
-                .alert("Chord Label", isPresented: $isEditingLabel) {
-                    TextField("Label (optional)", text: $labelInput)
-                        .textInputAutocapitalization(.words)
+                .alert("Name Chord", isPresented: $isEditingLabel) {
+                    TextField("C Major", text: $labelInput)
+                        .textInputAutocapitalization(.never)
                     Button("Cancel", role: .cancel) { }
-                    Button("Done") { draft.label = labelInput }
-                } message: {
-                    Text("Leave this empty for an unlabeled chord.")
+                    Button("Save") { draft.label = labelInput }
                 }
                 .alert("Couldn’t Save Chord", isPresented: Binding(
                     get: { saveError != nil },

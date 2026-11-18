@@ -22,9 +22,9 @@ struct SongTitleEditor: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Title") {
+                Section {
                     TextField("Da Funk", text: $title)
-                        .textInputAutocapitalization(.words)
+                        .textInputAutocapitalization(.never)
                         .submitLabel(.done)
                         .focused($titleIsFocused)
                         .onSubmit(save)

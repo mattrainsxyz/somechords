@@ -28,6 +28,7 @@ struct SongDetailView: View {
             if count < 2 { editMode = .inactive }
         }
         .listStyle(.plain)
+        .contentMargins(.top, 16, for: .scrollContent)
         .scrollContentBackground(.hidden)
         .frame(maxWidth: 850)
         .frame(maxWidth: .infinity)
@@ -67,7 +68,7 @@ struct SongDetailView: View {
             Button("Delete Chord", role: .destructive) { deleteChord(chord) }
             Button("Cancel", role: .cancel) { chordToDelete = nil }
         } message: { _ in
-            Text("This chord will be permanently removed from the song.")
+            Text("This chord will be deleted from the song.")
         }
         .alert("Couldn’t Update Song", isPresented: Binding(
             get: { operationError != nil },
@@ -98,7 +99,7 @@ struct SongDetailView: View {
         .accessibilityHint(Text(chordAccessibilityHint))
         .accessibilityValue(PianoNote.names(for: Set(chord.notes)))
         .accessibilityIdentifier("chordDiagram_\(chord.id)")
-        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+        .listRowInsets(EdgeInsets(top: index == 0 ? 0 : 8, leading: 16, bottom: 8, trailing: 16))
         .listRowSeparator(.hidden)
         .listRowBackground(Color.clear)
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {

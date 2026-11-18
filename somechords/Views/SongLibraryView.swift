@@ -14,8 +14,8 @@ struct SongLibraryView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section {
-                    ForEach(songs) { song in
+                ForEach(songs) { song in
+                    Section {
                         NavigationLink {
                             SongDetailView(song: song)
                         } label: {
@@ -48,6 +48,9 @@ struct SongLibraryView: View {
                     }
                 }
             }
+            .listStyle(.insetGrouped)
+            .listSectionSpacing(.custom(16))
+            .contentMargins(.top, 16, for: .scrollContent)
             .scrollContentBackground(.hidden)
             .background(Color(uiColor: .systemGroupedBackground))
             .overlay {
