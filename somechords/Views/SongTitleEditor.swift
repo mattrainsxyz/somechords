@@ -22,8 +22,8 @@ struct SongTitleEditor: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Song title") {
-                    TextField("e.g. My First Song", text: $title)
+                Section("Title") {
+                    TextField("Da Funk", text: $title)
                         .textInputAutocapitalization(.words)
                         .submitLabel(.done)
                         .focused($titleIsFocused)
