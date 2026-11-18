@@ -21,7 +21,8 @@ struct somechordsapp: App {
                         Button("Try Again", action: openNotebook)
                     }
                 } else {
-                    ProgressView("Opening notebook…")
+                    ProgressView()
+                        .accessibilityLabel("Loading")
                 }
             }
             .tint(.indigo)
